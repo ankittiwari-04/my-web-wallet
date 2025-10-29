@@ -6,6 +6,8 @@ function App() {
   const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(null);
   const [message, setMessage] = useState("I am Ankit");
+  const [toAddress, setToAddress] = useState("");
+  const [amount, setAmount] = useState("");
 
   // Connect wallet
   const connectWallet = async () => {
@@ -39,13 +41,37 @@ function App() {
     alert(`Signature: ${signature}`);
   };
 
+  // Send ETH
+  const sendETH = async () => {
+    if (!account) return alert("Connect your wallet first!");
+    if (!toAddress || !amount) return alert("Enter recipient and amount!");
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const tx = await signer.sendTransaction({
+        to: toAddress,
+        value: ethers.parseEther(amount),
+      });
+
+      alert(`Transaction Sent! Hash: ${tx.hash}`);
+      await tx.wait();
+      alert("✅ Transaction confirmed!");
+      getBalance(account); // refresh balance
+    } catch (error) {
+      console.error(error);
+      alert("❌ Transaction failed!");
+    }
+  };
+
   useEffect(() => {
     if (account) getBalance(account);
   }, [account]);
 
   return (
     <div className="app">
-      <h1>💳 Connect MetaMask Wallet</h1>
+      <h1>💳 MetaMask Wallet Dashboard</h1>
 
       {!account ? (
         <button onClick={connectWallet} className="connect-btn">
@@ -66,6 +92,23 @@ function App() {
         />
         <button onClick={signMessage} className="sign-btn">
           Sign Message
+        </button>
+      </div>
+
+      <div className="transaction-box">
+        <h3>💸 Send ETH</h3>
+        <input
+          placeholder="Recipient Address"
+          value={toAddress}
+          onChange={(e) => setToAddress(e.target.value)}
+        />
+        <input
+          placeholder="Amount (ETH)"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <button onClick={sendETH} className="send-btn">
+          Send ETH
         </button>
       </div>
     </div>
